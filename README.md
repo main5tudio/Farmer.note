@@ -1,2 +1,2 @@
 # Farmer.note
-Created via Acode
+Simple farm note. "My 1st offering"

@@ -1,0 +1,20 @@
+{
+  "name": "Farmer Note",
+  "short_name": "FarmNote",
+  "start_url": "/Farmer.note/index.html",
+  "display": "standalone",
+  "background_color": "#2b1b17",
+  "theme_color": "#2e7d32",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192/2e7d32/ffffff?text=FN",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512/2e7d32/ffffff?text=FN",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

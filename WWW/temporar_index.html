@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer App v8</title>
+<link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap');
+
+:root {
+    --bg: #f2f2f7;
+    --purple: #6200ee;
+    --purple-light: #ede7f6;
+    --cyan: #12c2e9;
+    --cyan-dark: #0a9bbf;
+    --white: #fff;
+    --text: #1a1a1a;
+    --muted: #888;
+    --red: #e74c3c;
+    --green: #27ae60;
+    --green-field: #2d6a1f;
+    --orange: #e67e22;
+    --orange-ranch: #c0440a;
+    --blue: #1565c0;
+    --teal: #00695c;
+    --tab-active: #333;
+    --border: #e0e0e0;
+    --shadow: 0 2px 8px rgba(0,0,0,0.09);
+    --radius: 11px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body, html { height: 100%; background: var(--bg); overflow: hidden; color: var(--text); }
+.screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── SPLASH ── */
+#splash-screen {
+    background: #a0522d;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+#splash-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 50%, transparent 35%, rgba(0,0,0,0.18) 100%);
+    pointer-events: none;
+}
+.splash-inner {
+    position: relative; z-index: 1; width: 100%;
+    padding: 0 8vw; margin-top: 52vh;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+}
+.splash-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 5rem; font-weight: 300; color: #f2e4d4;
+    line-height: 1.0; letter-spacing: -0.5px;
+    opacity: 0; animation: splashUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.1s forwards;
+}
+.splash-subtitle {
+    font-size: 0.78rem; font-weight: 300; letter-spacing: 0.28em; color: #dcc9b4;
+    text-transform: uppercase; margin-top: 2px;
+    opacity: 0; animation: splashUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.28s forwards;
+}
+.splash-credit {
+    font-size: 0.7rem; font-weight: 700; color: rgba(220,201,180,0.7); margin-top: 10px;
+    opacity: 0; animation: splashUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.45s forwards;
+}
+@keyframes splashUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SIGNUP ── */
+#signup-screen {
+    background: linear-gradient(160deg, #e0f7fa 0%, #f3e5f5 100%);
+    overflow-y: auto; justify-content: flex-start;
+}
+.signup-top {
+    background: var(--cyan); width: 100%; padding: 48px 28px 28px;
+    position: relative; overflow: hidden;
+}
+.signup-top::after { content: '🌾'; position: absolute; right: 20px; top: 30px; font-size: 4.5rem; opacity: 0.18; }
+.signup-top h1 { font-size: 1.7rem; color: white; font-weight: 900; }
+.signup-top p  { font-size: 0.82rem; color: rgba(255,255,255,0.85); margin-top: 4px; }
+.signup-form-wrap { padding: 28px 24px 40px; display: flex; flex-direction: column; flex: 1; }
+.signup-field { display: flex; flex-direction: column; margin-bottom: 16px; }
+.signup-label { font-size: 0.72rem; font-weight: bold; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; margin-left: 2px; }
+.signup-input { border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 0.9rem; outline: none; background: white; color: var(--text); font-family: inherit; width: 100%; }
+.signup-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-light); }
+.signup-input::placeholder { color: #bbb; }
+.signup-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.btn-daftar { background: #555; color: white; border: none; padding: 13px 30px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+.signup-reset-link { font-size: 0.72rem; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; border: none; font-family: inherit; }
+
+/* Widget BMKG di Signup */
+.mode-toggle { display: flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+.mode-btn { flex: 1; padding: 9px; border: none; background: white; font-size: 0.75rem; font-weight: bold; color: var(--muted); cursor: pointer; }
+.mode-btn.active { background: var(--purple); color: white; }
+.btn-auto-detect { width: 100%; padding: 11px; border-radius: 10px; border: 1.5px solid var(--purple); background: white; color: var(--purple); font-size: 0.82rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-auto-detect:hover { background: var(--purple-light); }
+.spin { width: 14px; height: 14px; border: 2px solid #ddd; border-top-color: var(--purple); border-radius: 50%; animation: spin 0.7s linear infinite; }
+.loc-result { font-size: 0.8rem; font-weight: bold; color: var(--purple); margin-top: 5px; padding: 5px; background: var(--purple-light); border-radius: 6px; display: none; }
+
+/* ── SHARED HEADER ── */
+.app-header { background: #fff; border-bottom: 2px solid #222; flex-shrink: 0; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.10); transition: background 0.3s; }
+.hdr-top { display: flex; min-height: 70px; }
+.hdr-farm { background: #7aaecc; flex: 0 0 55%; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 8px 10px; overflow: hidden; transition: background 0.3s; }
+.hdr-farm-text { display: flex; flex-direction: column; overflow: hidden; flex: 1; }
+.hdr-farm-name { font-size: 1.15rem; font-weight: 900; color: rgba(0,0,0,0.82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; }
+.hdr-farm-loc { font-size: 0.65rem; font-weight: bold; color: rgba(0,0,0,0.55); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hdr-weather-box { flex: 0 0 45%; background: #fff; border-left: 2px solid #222; display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; }
+.hdr-today-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.hdr-today-label { font-size: 1.1rem; font-weight: 900; color: #111; line-height: 1; }
+.hdr-today-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0; }
+.hdr-today-icon { font-size: 1.6rem; line-height: 1; }
+.hdr-today-temp { font-size: 1rem; font-weight: 900; color: #111; white-space: nowrap; }
+.hdr-today-date { font-size: 0.55rem; color: var(--muted); margin-top: 2px; text-align: right; line-height: 1.3; }
+.hdr-bmkg-credit { font-size: 0.46rem; color: #aaa; text-align: right; margin-top: 1px; letter-spacing: 0.02em; }
+.hdr-bmkg-credit a { color: #6ab0d4; text-decoration: none; }
+
+.hdr-forecast-wrap { display: flex; border-top: 1px solid #ddd; background: #f8f8f8; }
+.hdr-fc-spacer { flex: 0 0 55%; background: #7aaecc; border-top: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; padding: 3px 10px 4px 44px; transition: background 0.3s; }
+.hdr-fc-date-small { font-size: 0.58rem; color: rgba(0,0,0,0.5); font-weight: bold; white-space: nowrap; }
+.hdr-forecast-cols { flex: 0 0 45%; display: flex; border-left: 2px solid #222; }
+.hdr-fc-day { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 3px 2px 4px; border-right: 1px solid #ddd; gap: 1px; }
+.hdr-fc-day:last-child { border-right: none; }
+.hdr-fc-label { font-size: 0.52rem; color: #555; font-weight: bold; text-transform: lowercase; }
+.hdr-fc-icon  { font-size: 0.9rem; line-height: 1; }
+.hdr-fc-temp  { font-size: 0.56rem; color: var(--blue); font-weight: bold; }
+
+/* tab header colours */
+.hdr-home    { background: #7aaecc !important; }
+.hdr-field   { background: #7dbb6e !important; }
+.hdr-ranch   { background: #c4956a !important; }
+.hdr-stock   { background: #6b4226 !important; }
+.hdr-finance { background: #2c4a7c !important; }
+.hdr-stock   .hdr-farm-name, .hdr-finance .hdr-farm-name { color: rgba(255,255,255,0.92) !important; }
+.hdr-stock   .hdr-farm-loc, .hdr-finance .hdr-farm-loc  { color: rgba(255,255,255,0.6) !important; }
+.hdr-stock   .hdr-menu-btn span, .hdr-finance .hdr-menu-btn span { background: rgba(255,255,255,0.85) !important; }
+
+/* ── DASHBOARD ── */
+#dashboard-screen { background: var(--bg); }
+.content-body { flex: 1; padding: 10px 10px; overflow-y: auto; padding-bottom: 80px; }
+
+/* ── FOOTER ── */
+.footer { position: fixed; bottom: 0; width: 100%; display: flex; height: 60px; background: white; border-top: 1px solid var(--border); z-index: 10; }
+.tab-item { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; color: #777; border-right: 1px solid #eee; cursor: pointer; padding: 4px 2px; text-align: center; }
+.tab-item:last-child { border-right: none; }
+.tab-item.active span { background: var(--tab-active); color: white; padding: 3px 8px; border-radius: 7px; font-weight: bold; }
+
+/* ── SHARED COMPONENTS ── */
+.section-label { font-size: 0.7rem; font-weight: bold; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 2px 5px; }
+.card { background: var(--white); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow); }
+.tag { padding: 1px 6px; border-radius: 6px; font-size: 0.62rem; font-weight: bold; }
+.empty-msg { color: var(--muted); text-align: center; font-size: 0.8rem; padding: 8px 0; font-style: italic; }
+.coming-soon { text-align: center; margin-top: 60px; color: #bbb; font-style: italic; }
+
+/* ── HOME & STOCK ALERTS ── */
+.stock-alert-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid #fdecea; font-size:0.82rem; }
+.stock-alert-row:last-child { border-bottom:none; }
+.sa-name { flex:1; }
+.note-item { padding:7px 0; border-bottom:1px dashed #f0f0f0; }
+.note-item:last-child { border-bottom:none; }
+.note-type-badge { display:inline-block; font-size:0.58rem; font-weight:bold; padding:1px 6px; border-radius:6px; margin-bottom:4px; }
+.badge-write { background:#e3f2fd; color:#0077cc; }
+.badge-check { background:#ede7f6; color:#6200ee; }
+.note-text { font-size:0.84rem; color:var(--text); line-height:1.5; white-space:pre-wrap; }
+.note-meta { display:flex; justify-content:space-between; align-items:center; margin-top:5px; }
+.note-date { font-size:0.63rem; color:var(--muted); }
+.note-del { background:none; border:none; color:#ccc; cursor:pointer; font-size:0.78rem; padding:2px 4px; }
+.note-del:hover { color:var(--red); }
+
+/* ── HAMBURGER / DRAWER ── */
+.hdr-menu-btn { background: none; border: none; cursor: pointer; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.hdr-menu-btn span { display: block; width: 18px; height: 2px; background: white; border-radius: 2px; }
+.side-drawer { position: fixed; top: 0; left: -100%; width: 78vw; max-width: 280px; height: 100vh; background: #1a1a2e; z-index: 300; transition: left 0.28s ease; display: flex; flex-direction: column; }
+.side-drawer.open { left: 0; }
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 299; display: none; }
+.drawer-overlay.open { display: block; }
+.drawer-top { background: #16213e; padding: 48px 20px 20px; }
+.drawer-brand { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: bold; letter-spacing: 0.04em; }
+.drawer-farm  { font-size: 1.1rem; font-weight: 900; color: white; margin-top: 4px; }
+.drawer-area  { font-size: 0.68rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.drawer-nav { flex: 1; padding: 14px 0; }
+.drawer-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: rgba(255,255,255,0.75); font-size: 0.88rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.drawer-item:hover { background: rgba(255,255,255,0.07); color: white; }
+.drawer-item-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+
+/* ── FAB ── */
+.fab-wrap { position: fixed; bottom: 76px; right: 14px; z-index: 100; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fab-btn-main { width: 48px; height: 48px; border-radius: 50%; background: var(--blue); color: white; border: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.25); cursor: pointer; }
+
+/* ── MODALS ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.modal-overlay.hidden { display: none; }
+.modal-sheet { background: white; width: 100%; max-width: 480px; border-radius: 18px 18px 0 0; padding: 16px 14px 30px; max-height: 75vh; overflow-y: auto; }
+.modal-title { font-weight: bold; font-size: 0.92rem; color: var(--purple); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--muted); }
+.btn-purchase { width: 100%; background: var(--purple); color: white; border: none; border-radius: 8px; padding: 9px; font-size: 0.84rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<div id="splash-screen" class="screen active">
+    <div class="splash-inner">
+        <div class="splash-title">Farm note</div>
+        <div class="splash-subtitle">Aplikasi Internal Anda</div>
+        <div class="splash-credit">Sketched help by &nbsp;.main5studio</div>
+    </div>
+</div>
+
+<div id="signup-screen" class="screen">
+    <div class="signup-top">
+        <h1>Farmer App</h1>
+        <p>Kelola kebun Anda dari genggaman.</p>
+    </div>
+    <div class="signup-form-wrap">
+        <div class="signup-field">
+            <label class="signup-label">Nama Farm Anda</label>
+            <input class="signup-input" id="reg-farm" type="text" placeholder="nama farm anda" autocomplete="off">
+        </div>
+        
+        <div class="signup-field">
+            <label class="signup-label">Lokasi Anda (Prakiraan BMKG)</label>
+            
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="btn-mode-auto" onclick="setMode('auto')">📍 Otomatis</button>
+                <button class="mode-btn" id="btn-mode-manual" onclick="setMode('manual')">🗺️ Manual</button>
+            </div>
+
+            <div id="mode-auto">
+                <button class="btn-auto-detect" id="btn-detect" onclick="detectLocation()">
+                    <span id="detect-icon">📡</span> <span id="detect-label">Deteksi Lokasi Saya</span>
+                </button>
+                <div id="auto-status" style="margin-top:8px; font-size:0.75rem; color:var(--muted); text-align:center;">
+                    Klik tombol untuk mengambil lokasi.
+                </div>
+            </div>
+
+            <div id="mode-manual">
+                <select class="signup-input" id="sel-prov" onchange="onProvChange()" style="margin-bottom:8px;">
+                    <option value="">— Memuat Provinsi... —</option>
+                </select>
+                <select class="signup-input" id="sel-kab" onchange="onKabChange()" disabled style="margin-bottom:8px;">
+                    <option value="">— Pilih Kota/Kabupaten —</option>
+                </select>
+                <select class="signup-input" id="sel-kec" onchange="onKecChange()" disabled>
+                    <option value="">— Pilih Kecamatan —</option>
+                </select>
+            </div>
+            
+            <div class="loc-result" id="loc-result"></div>
+        </div>
+
+        <div class="signup-field">
+            <label class="signup-label">Email Anda</label>
+            <input class="signup-input" id="reg-email" type="email" placeholder="email anda" autocomplete="off">
+        </div>
+        <div class="signup-field">
+            <label class="signup-label">Password Anda</label>
+            <input class="signup-input" id="reg-pass" type="password" placeholder="password anda">
+        </div>
+        <div class="signup-bottom">
+            <button class="signup-reset-link" onclick="clearData()">Reset data</button>
+            <button class="btn-daftar" onclick="doSignup()">daftar</button>
+        </div>
+    </div>
+</div>
+
+<div id="dashboard-screen" class="screen">
+    <div class="app-header">
+        <div class="hdr-top">
+            <div class="hdr-farm hdr-home" id="hdr-farm">
+                <button class="hdr-menu-btn" onclick="openDrawer()">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="hdr-farm-text">
+                    <div class="hdr-farm-name" id="hdr-farm-name">*nama farm anda</div>
+                    <div class="hdr-farm-loc"  id="hdr-farm-loc">lokasi</div>
+                </div>
+            </div>
+
+            <div class="hdr-weather-box">
+                <div class="hdr-today-row">
+                    <div class="hdr-today-label">Today</div>
+                    <div class="hdr-today-right">
+                        <div class="hdr-today-icon" id="hdr-today-icon">⛅</div>
+                        <div class="hdr-today-temp" id="hdr-today-temp">-- &deg;C</div>
+                    </div>
+                </div>
+                <div class="hdr-today-date" id="hdr-today-date">-- --- ----</div>
+                <div class="hdr-bmkg-credit">src: <a href="https://www.bmkg.go.id" target="_blank">BMKG</a></div>
+            </div>
+        </div>
+
+        <div class="hdr-forecast-wrap">
+            <div class="hdr-fc-spacer hdr-home" id="hdr-fc-spacer">
+                <div class="hdr-fc-date-small" id="hdr-fc-date-full">--</div>
+            </div>
+            <div class="hdr-forecast-cols" id="hdr-forecast">
+                <div class="hdr-fc-day"><div class="hdr-fc-label">--</div><div class="hdr-fc-icon">⛅</div><div class="hdr-fc-temp">--&deg;</div></div>
+                <div class="hdr-fc-day"><div class="hdr-fc-label">--</div><div class="hdr-fc-icon">⛅</div><div class="hdr-fc-temp">--&deg;</div></div>
+                <div class="hdr-fc-day"><div class="hdr-fc-label">--</div><div class="hdr-fc-icon">⛅</div><div class="hdr-fc-temp">--&deg;</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-body" id="main-content"></div>
+
+    <div class="footer">
+        <div class="tab-item active" onclick="navTab('home',this)"><span>home</span></div>
+        <div class="tab-item" onclick="navTab('field',this)"><span>field</span></div>
+        <div class="tab-item" onclick="navTab('ranch',this)"><span>ranch</span></div>
+        <div class="tab-item" onclick="navTab('stock',this)"><span>stock</span></div>
+        <div class="tab-item" onclick="navTab('finance',this)"><span>finance</span></div>
+    </div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="side-drawer" id="side-drawer">
+    <div class="drawer-top">
+        <div class="drawer-brand">main5tudio.dev</div>
+        <div class="drawer-farm" id="drawer-farm-name">Farm</div>
+        <div class="drawer-area" id="drawer-farm-area"></div>
+    </div>
+    <div class="drawer-nav">
+        <div class="drawer-item" onclick="closeDrawer();navTab('home',document.querySelector('.tab-item'))">🏠 Home</div>
+        <div class="drawer-item" onclick="closeDrawer();navTab('field',document.querySelectorAll('.tab-item')[1])">🌱 Field</div>
+        <div class="drawer-item" onclick="closeDrawer();navTab('ranch',document.querySelectorAll('.tab-item')[2])">🐄 Ranch</div>
+        <div class="drawer-item" onclick="closeDrawer();navTab('stock',document.querySelectorAll('.tab-item')[3])">📦 Stock</div>
+        <div class="drawer-item" onclick="closeDrawer();navTab('finance',document.querySelectorAll('.tab-item')[4])">💰 Finance</div>
+    </div>
+</div>
+
+<script>
+// ── DATA MODEL ────────────────────────────────────────────────
+const DAYS_ID   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function uid() { return Date.now()+Math.floor(Math.random()*99999); }
+
+const defaultData = {
+    todos: [], stock: [], purchases: [], plantations: [],
+    contacts: [], notes: [],
+    profile: { farmName:"", area:"", email:"", bmkgKode:"" }
+};
+
+let appData = {};
+let currentTab = 'home';
+
+// ── LOCATION PICKER BMKG LOGIC ────────────────────────────────
+let currentMode = 'auto';
+let pickedCode  = ''; 
+let pickedArea  = '';
+const CSV_URL = 'https://raw.githubusercontent.com/kodewilayah/permendagri-72-2019/main/dist/base.csv';
+let masterData = null;
+
+function setMode(m) {
+    currentMode = m;
+    document.getElementById('mode-auto').style.display   = m === 'auto'   ? 'block' : 'none';
+    document.getElementById('mode-manual').style.display = m === 'manual' ? 'flex' : 'none';
+    document.getElementById('btn-mode-auto').classList.toggle('active',   m === 'auto');
+    document.getElementById('btn-mode-manual').classList.toggle('active', m === 'manual');
+    if (m === 'manual' && !masterData) loadCSV();
+}
+
+function detectLocation() {
+    if (!navigator.geolocation) { 
+        document.getElementById('auto-status').textContent = 'GPS tidak didukung. Gunakan Manual.'; 
+        return; 
+    }
+    setDetectBtn(true);
+    navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=id`)
+        .then(r => r.json())
+        .then(data => {
+            const addr = data.address || {};
+            const kec  = addr.suburb || addr.town || addr.village || addr.city_district || '';
+            const kab  = addr.city || addr.county || addr.state_district || '';
+            const prov = addr.state || '';
+            matchBMKGByName(kec, kab, prov);
+        }).catch(() => { setDetectBtn(false); document.getElementById('auto-status').textContent = 'Gagal melacak area.'; });
+    }, err => {
+        setDetectBtn(false); document.getElementById('auto-status').textContent = 'Izin lokasi ditolak.';
+    }, { timeout: 10000 });
+}
+
+function matchBMKGByName(kec, kab, prov) {
+    loadCSVOnce().then(() => {
+        const norm = s => s ? s.toLowerCase().replace(/kota |kabupaten |kecamatan /g,'').trim() : '';
+        const nKec = norm(kec), nKab = norm(kab);
+        let best = null;
+        for (const item of masterData) {
+            if (item.code.split('.').length !== 3) continue; // adm3
+            const nItem = norm(item.name);
+            if (nKec && nItem.includes(nKec)) { best = item; break; }
+        }
+        setDetectBtn(false);
+        if (best) {
+            pickedCode = best.code; pickedArea = [kec, kab].filter(Boolean).join(', ');
+            showResultPicker(`📍 Ditemukan: ${pickedArea}`);
+        } else {
+            document.getElementById('auto-status').textContent = 'Tidak cocok otomatis. Gunakan Manual.';
+        }
+    });
+}
+
+function setDetectBtn(loading) {
+    const btn = document.getElementById('btn-detect');
+    btn.disabled = loading;
+    document.getElementById('detect-icon').outerHTML = loading ? '<div class="spin" id="detect-icon"></div>' : '<span id="detect-icon">📡</span>';
+    document.getElementById('detect-label').textContent = loading ? 'Mencari...' : 'Deteksi Lokasi Saya';
+}
+
+async function loadCSVOnce() {
+    if (masterData) return;
+    const raw = await fetch(CSV_URL).then(r => r.text());
+    masterData = raw.trim().split('\n').map(line => {
+        const idx = line.indexOf(',');
+        return { code: line.slice(0, idx).trim(), name: line.slice(idx+1).trim() };
+    }).filter(x => x.code && x.name);
+}
+
+async function loadCSV() {
+    const selProv = document.getElementById('sel-prov');
+    try {
+        await loadCSVOnce();
+        const provs = masterData.filter(x => /^\d{2}$/.test(x.code));
+        selProv.innerHTML = '<option value="">— Pilih Provinsi —</option>';
+        provs.forEach(p => selProv.appendChild(new Option(p.name, p.code)));
+    } catch(e) { selProv.innerHTML = '<option>Gagal load data</option>'; }
+}
+
+function onProvChange() {
+    const code = document.getElementById('sel-prov').value;
+    const selKab = document.getElementById('sel-kab');
+    selKab.innerHTML = '<option value="">— Pilih Kota/Kabupaten —</option>';
+    selKab.disabled = !code; document.getElementById('sel-kec').disabled = true;
+    if (!code) return;
+    masterData.filter(x => x.code.startsWith(code + '.') && x.code.split('.').length === 2)
+              .forEach(k => selKab.appendChild(new Option(k.name, k.code)));
+}
+
+function onKabChange() {
+    const code = document.getElementById('sel-kab').value;
+    const selKec = document.getElementById('sel-kec');
+    selKec.innerHTML = '<option value="">— Pilih Kecamatan —</option>';
+    selKec.disabled = !code;
+    if (!code) return;
+    masterData.filter(x => x.code.startsWith(code + '.') && x.code.split('.').length === 3)
+              .forEach(k => selKec.appendChild(new Option(k.name, k.code)));
+}
+
+function onKecChange() {
+    pickedCode = document.getElementById('sel-kec').value;
+    const kabEl = document.getElementById('sel-kab');
+    const kecEl = document.getElementById('sel-kec');
+    pickedArea = `${kecEl.options[kecEl.selectedIndex].text}, ${kabEl.options[kabEl.selectedIndex].text}`;
+    showResultPicker(`🗺️ Terpilih: ${pickedArea}`);
+}
+
+function showResultPicker(text) {
+    const res = document.getElementById('loc-result');
+    res.style.display = 'block'; res.textContent = text;
+}
+
+// ── PERSISTENCE & INIT ────────────────────────────────────────
+function initData() {
+    const saved = localStorage.getItem('farmerApp_v8');
+    if (saved) { appData = JSON.parse(saved); }
+    else {
+        appData = JSON.parse(JSON.stringify(defaultData));
+        saveData();
+    }
+    
+    // Splash screen logic (4.5s)
+    setTimeout(function() {
+        document.getElementById('splash-screen').classList.remove('active');
+        if (appData.profile && appData.profile.farmName) {
+            enterApp();
+        } else {
+            document.getElementById('signup-screen').classList.add('active');
+        }
+    }, 4500);
+}
+
+function saveData() { localStorage.setItem('farmerApp_v8', JSON.stringify(appData)); }
+function clearData() {
+    if (!confirm("Hapus semua data?")) return;
+    localStorage.removeItem('farmerApp_v8'); location.reload();
+}
+
+function doSignup() {
+    const farmName = (document.getElementById('reg-farm').value||'').trim();
+    const email    = (document.getElementById('reg-email').value||'').trim();
+    
+    if (!farmName) { alert("Nama farm tidak boleh kosong."); return; }
+    if (!pickedCode) { alert("Harap deteksi atau pilih lokasi Anda untuk fitur cuaca."); return; }
+
+    appData.profile = { farmName, area: pickedArea, email, bmkgKode: pickedCode };
+    saveData(); 
+    enterApp();
+}
+
+function enterApp() {
+    document.getElementById('signup-screen').classList.remove('active');
+    document.getElementById('dashboard-screen').classList.add('active');
+    updateHeader();
+    fetchWeather();
+    applyHeaderColor('home');
+    navTab('home', document.querySelector('.tab-item.active'));
+}
+
+function updateHeader() {
+    var prof = appData.profile || {};
+    document.getElementById('hdr-farm-name').textContent = prof.farmName || '*nama farm anda';
+    document.getElementById('hdr-farm-loc').textContent  = prof.area || '--';
+    
+    var drawerFarm = document.getElementById('drawer-farm-name');
+    var drawerArea = document.getElementById('drawer-farm-area');
+    if (drawerFarm) drawerFarm.textContent = prof.farmName || 'Farm';
+    if (drawerArea) drawerArea.textContent = prof.area || '';
+    
+    var d = new Date();
+    var dayFull = DAYS_ID[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS_ID[d.getMonth()] + ' ' + d.getFullYear();
+    document.getElementById('hdr-today-date').textContent = dayFull;
+    document.getElementById('hdr-fc-date-full').textContent = dayFull;
+}
+
+// ── CUACA BMKG ────────────────────────────────────────────────
+function fetchWeather() {
+    var kode = (appData.profile && appData.profile.bmkgKode) ? appData.profile.bmkgKode.trim() : '';
+    if (!kode) return;
+
+    // Menggunakan adm3 agar sinkron dengan CSV picker
+    var url = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm3=' + encodeURIComponent(kode);
+    fetch(url)
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(json) {
+            var allCuaca = (json.data && json.data[0] && json.data[0].cuaca)
+                ? json.data[0].cuaca.reduce(function(a, b) { return a.concat(b); }, [])
+                : [];
+            if (!allCuaca.length) throw new Error('data kosong');
+
+            // Cari data terdekat (Hari ini)
+            var now = Date.now();
+            var current = allCuaca[0];
+            var minDiff = Infinity;
+            allCuaca.forEach(function(item) {
+                var t = new Date(item.local_datetime).getTime();
+                var diff = Math.abs(t - now);
+                if (diff < minDiff) { minDiff = diff; current = item; }
+            });
+
+            document.getElementById('hdr-today-icon').innerHTML = bmkgIcon(current.weather_desc);
+            document.getElementById('hdr-today-temp').innerHTML = Math.round(current.t) + ' &deg;C';
+
+            // Forecast H+1, H+2, H+3 (ambil jam 12 siang)
+            var dailyMap = {};
+            allCuaca.forEach(function(item) {
+                var day = item.local_datetime.substring(0, 10);
+                var jam = item.local_datetime.substring(11, 13);
+                if (!dailyMap[day] || jam === '12') dailyMap[day] = item;
+            });
+            
+            var todayKey = new Date().toISOString().substring(0, 10);
+            var nextDays = Object.keys(dailyMap)
+                .filter(function(k) { return k > todayKey; })
+                .sort()
+                .slice(0, 3);
+
+            var fc = document.getElementById('hdr-forecast');
+            if (fc && nextDays.length) {
+                fc.innerHTML = nextDays.map(function(k) {
+                    var item  = dailyMap[k];
+                    var d     = new Date(k + 'T00:00:00');
+                    var dname = DAYS_ID[d.getDay()].substring(0, 3);
+                    return '<div class="hdr-fc-day">'
+                        + '<div class="hdr-fc-label">' + dname + ' ' + d.getDate() + '</div>'
+                        + '<div class="hdr-fc-icon">'  + bmkgIcon(item.weather_desc) + '</div>'
+                        + '<div class="hdr-fc-temp">'  + Math.round(item.t) + '&deg;</div>'
+                        + '</div>';
+                }).join('');
+            }
+        })
+        .catch(function(err) {
+            console.warn('BMKG fetch gagal:', err);
+        });
+}
+
+function bmkgIcon(desc) {
+    var d = (desc || '').toLowerCase();
+    if (d.includes('cerah berawan')) return '⛅';
+    if (d.includes('cerah')) return '☀️';
+    if (d.includes('berawan') || d.includes('awan')) return '☁️';
+    if (d.includes('hujan lebat') || d.includes('deras') || d.includes('petir')) return '⛈️';
+    if (d.includes('hujan') || d.includes('rain')) return '🌧️';
+    return '🌤️';
+}
+
+// ── NAVIGATION & RENDER ───────────────────────────────────────
+var TAB_HDR_CLASS = { home: 'hdr-home', field: 'hdr-field', ranch: 'hdr-ranch', stock: 'hdr-stock', finance: 'hdr-finance' };
+
+function applyHeaderColor(tab) {
+    var farm   = document.getElementById('hdr-farm');
+    var spacer = document.getElementById('hdr-fc-spacer');
+    var allCls = ['hdr-home','hdr-field','hdr-ranch','hdr-stock','hdr-finance'];
+    if (!farm) return;
+    allCls.forEach(function(c){ farm.classList.remove(c); if(spacer) spacer.classList.remove(c); });
+    var cls = TAB_HDR_CLASS[tab] || 'hdr-home';
+    farm.classList.add(cls);
+    if (spacer) spacer.classList.add(cls);
+}
+
+function navTab(name, el) {
+    currentTab = name;
+    document.querySelectorAll('.tab-item').forEach(function(t){ t.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    applyHeaderColor(name);
+    renderContent();
+}
+
+function renderContent() {
+    const c = document.getElementById('main-content');
+    if (currentTab==='home') {
+        c.innerHTML = '<div class="section-label">Home / Dasbor</div><div class="card"><div class="empty-msg">Selamat datang! Cuaca termuat di header atas.</div></div>';
+    } else {
+        c.innerHTML = `<div class="coming-soon">${currentTab.toUpperCase()} module -- coming soon.</div>`;
+    }
+}
+
+// ── DRAWER ────────────────────────────────────────────────────
+function openDrawer() {
+    document.getElementById('side-drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+    document.getElementById('side-drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+// Init Boot
+initData();
+</script>
+</body>
+</html>

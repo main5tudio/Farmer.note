@@ -1,0 +1,6 @@
+{
+  "appId": "dev.main5studio.farmernote",
+  "appName": "Farmer Note",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

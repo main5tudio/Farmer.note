@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranch Integrated - Farmer.note</title>
+<style>
+:root {
+    --bg: #f2f2f7;
+    --text: #1a1a1a;
+    --muted: #888;
+    --red: #e74c3c;
+    --green: #27ae60;
+    --orange-ranch: #c0440a;
+    --border: #e0e0e0;
+    --shadow: 0 2px 8px rgba(0,0,0,0.09);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background: var(--bg); color: var(--text); padding: 14px; padding-bottom: 60px; }
+
+/* ── UTILITIES ── */
+.hidden { display: none !important; }
+.thin-line { border: none; border-top: 1px solid #e0e0e0; margin: 16px 0; }
+.btn-action { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-size: 0.65rem; font-weight: bold; color: var(--muted); cursor: pointer; padding: 4px 8px; }
+
+/* ── VIEW WRAPPERS ── */
+#view-main { display: block; }
+#view-detail { display: none; background: white; border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-height: 90vh; }
+
+/* ── MAIN VIEW: GRID ── */
+.ranch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ranch-sq { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 14px 10px; display: flex; flex-direction: column; justify-content: center; position: relative; min-height: 110px; cursor: pointer; border: 2px solid transparent; }
+.ranch-sq:active { border-color: var(--orange-ranch); transform: scale(0.98); }
+.ranch-icon { font-size: 3rem; text-align: center; line-height: 1; margin-bottom: 8px; }
+.ranch-title { font-weight: 900; font-size: 1.05rem; color: var(--text); text-align: center; }
+.ranch-sub { position: absolute; bottom: 10px; left: 10px; font-size: 0.65rem; color: var(--muted); font-style: italic; font-weight: bold; }
+.ranch-count { position: absolute; bottom: 10px; right: 10px; font-size: 0.85rem; color: var(--orange-ranch); font-weight: bold; }
+
+/* ── MAIN VIEW: GLOBAL REPORTS ── */
+.segment-title { font-size: 0.85rem; font-weight: 900; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;}
+.data-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 6px 0; border-bottom: 1px dashed #f0f0f0; align-items: center; }
+.data-row:last-child { border-bottom: none; }
+.data-row b { color: var(--text); }
+.val-cost { color: var(--red) !important; }
+.val-income { color: var(--green) !important; }
+
+/* ── MAIN VIEW: RATE PILLS ── */
+.rate-container { display: flex; flex-wrap: wrap; gap: 8px; }
+.rate-pill { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; flex: 1; min-width: 45%; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.rate-pill span { color: var(--muted); font-weight: bold; }
+.rate-pill b { color: var(--green); font-weight: 900; font-size: 0.85rem; }
+
+/* ── DETAIL VIEW ── */
+.ranch-nav { display: flex; align-items: center; margin-bottom: 16px; }
+.btn-ranch-back { background: var(--orange-ranch); color: white; border: none; padding: 6px 14px; border-radius: 8px; font-weight: bold; font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 6px;}
+
+.rd-header { display: flex; align-items: center; gap: 14px; }
+.rd-icon { font-size: 3rem; line-height: 1; }
+.rd-info { flex: 1; }
+.rd-name { font-weight: 900; font-size: 1.4rem; color: var(--text); }
+.rd-sub { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+.rd-total { font-size: 1.6rem; font-weight: 900; color: var(--orange-ranch); }
+
+.detail-kategori-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.prod-kategori-label { font-size: 0.75rem; font-weight: bold; color: var(--muted); margin: 14px 0 6px; border-left: 3px solid var(--orange-ranch); padding-left: 6px; }
+</style>
+</head>
+<body>
+
+<div id="view-main">
+    <div style="font-size: 0.75rem; font-weight: bold; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;">PETERNAKAN (RANCH)</div>
+
+    <div class="ranch-grid" id="grid-container"></div>
+
+    <hr class="thin-line">
+
+    <div class="segment-block">
+        <div class="segment-title">Laporan Global Ringkas</div>
+        <div class="data-row"><span>Total Populasi Ternak</span> <b id="global-pop">0 ekor</b></div>
+        <div class="data-row"><span>Total Cost Harian</span> <b class="val-cost" id="global-cost">- Rp 0</b></div>
+    </div>
+
+    <hr class="thin-line">
+
+    <div class="segment-block">
+        <div class="segment-title">Rate Produksi / Hasil</div>
+        <div class="rate-container" id="global-rates">
+            </div>
+    </div>
+</div>
+
+
+<div id="view-detail">
+    <div class="ranch-nav">
+        <button class="btn-ranch-back" onclick="closeDetail()">◀ Kembali</button>
+    </div>
+    
+    <div class="rd-header">
+        <div class="rd-icon" id="dt-icon">🐔</div>
+        <div class="rd-info">
+            <div class="rd-name" id="dt-name">Chicken</div>
+            <div class="rd-sub" id="dt-sub">Layer (Petelur)</div>
+        </div>
+        <div class="rd-total" id="dt-count">150</div>
+    </div>
+
+    <hr class="thin-line">
+
+    <div class="segment-block">
+        <div class="segment-title">
+            LAPORAN GLOBAL TERNAK
+            <button class="btn-action">+ Update</button>
+        </div>
+        
+        <div class="detail-kategori-label">Demografi:</div>
+        <div id="dt-demografi"></div> <div class="detail-kategori-label" style="margin-top:14px;">Maintain Cost Harian:</div>
+        <div id="dt-costs"></div> </div>
+
+    <hr class="thin-line">
+
+    <div class="segment-block">
+        <div class="segment-title">
+            HASIL PRODUKSI
+            <button class="btn-action">+ Input Hasil</button>
+        </div>
+
+        <div class="prod-kategori-label">Kategori: Unit Utuh (Ekor)</div>
+        <div id="dt-prod-whole"></div> <div class="prod-kategori-label">Kategori: Produksi Harian</div>
+        <div id="dt-prod-daily"></div> </div>
+</div>
+
+<script>
+// 1. DATA DATABASE (Ini adalah variabel array yang menyimpan semua data)
+const ranchData = [
+    {
+        id: 1, name: "Chicken", sub: "petelur", icon: "🐔", count: 150,
+        demografi: [ { label: "Betina Produktif", qty: 140 }, { label: "Afkir / Tua", qty: 10 } ],
+        costs: [ { label: "Pakan Konsentrat", val: 35000 }, { label: "Vitamin Air", val: 10000 } ],
+        prodWhole: [ { label: "Jual Ayam Afkir", qty: 2, val: 70000 } ],
+        prodDaily: [ { label: "Telur Hari Ini", qty: 120, unit: "butir", val: 180000 } ]
+    },
+    {
+        id: 2, name: "Goat", sub: "pedaging", icon: "🐐", count: 12,
+        demografi: [ { label: "Indukan", qty: 8 }, { label: "Anakan", qty: 4 } ],
+        costs: [ { label: "Rumput / Pakan", val: 15000 } ],
+        prodWhole: [ { label: "Jual Kambing Jantan", qty: 1, val: 2500000 } ],
+        prodDaily: [ ] // Kosong karena bukan kambing perah
+    },
+    {
+        id: 3, name: "Cow", sub: "perah", icon: "🐄", count: 4,
+        demografi: [ { label: "Sapi Perah Dewasa", qty: 4 } ],
+        costs: [ { label: "Konsentrat Sapi", val: 40000 } ],
+        prodWhole: [ ],
+        prodDaily: [ { label: "Susu Segar", qty: 15, unit: "Liter", val: 150000 } ]
+    }
+];
+
+// Helper Formatter Angka (Ribuan)
+function fmt(num) { return Number(num).toLocaleString('id-ID'); }
+
+// 2. FUNGSI UNTUK MERENDER HALAMAN LUAR (MAIN VIEW)
+function renderMain() {
+    // A. Render Kotak-Kotak Grid
+    let gridHtml = '';
+    let totalPopulasi = 0;
+    let totalCostHarian = 0;
+    
+    // Variabel untuk menampung rangkuman produksi (Rate)
+    let totalTelur = 0; let totalSusu = 0;
+
+    ranchData.forEach(r => {
+        // Buat kotak untuk tiap hewan
+        gridHtml += `
+        <div class="ranch-sq" onclick="openDetail(${r.id})">
+            <div class="ranch-icon">${r.icon}</div>
+            <div class="ranch-title">${r.name}</div>
+            <div class="ranch-sub">${r.sub}</div>
+            <div class="ranch-count">${r.count}</div>
+        </div>`;
+
+        // B. Hitung Kalkulasi Global
+        totalPopulasi += r.count;
+        r.costs.forEach(c => { totalCostHarian += c.val; });
+
+        // C. Cari data Telur dan Susu untuk dimasukkan ke Rate Produksi
+        r.prodDaily.forEach(p => {
+            if(p.label.includes("Telur")) totalTelur += p.qty;
+            if(p.label.includes("Susu")) totalSusu += p.qty;
+        });
+    });
+
+    // Tambah kotak "+" di akhir
+    gridHtml += `<div class="ranch-sq ranch-sq-add"><div class="ranch-icon" style="color:#aaa; font-weight:300;">+</div></div>`;
+    
+    // Tulis ke layar HTML
+    document.getElementById('grid-container').innerHTML = gridHtml;
+    document.getElementById('global-pop').innerText = `${totalPopulasi} ekor`;
+    document.getElementById('global-cost').innerText = `- Rp ${fmt(totalCostHarian)}`;
+
+    // D. Render Rate Produksi Pills
+    document.getElementById('global-rates').innerHTML = `
+        <div class="rate-pill"><span>🥚 Telur</span> <b>${totalTelur ? totalTelur + ' btr' : '-'}</b></div>
+        <div class="rate-pill"><span>🥛 Susu</span> <b>${totalSusu ? totalSusu + ' L' : '-'}</b></div>
+        <div class="rate-pill"><span>🐐 Etawa</span> <b>-</b></div>
+        <div class="rate-pill"><span>🍗 Broiler</span> <b>-</b></div>
+    `;
+}
+
+// 3. FUNGSI MEMBUKA DETAIL HEWAN
+function openDetail(id) {
+    // Cari data hewan berdasarkan ID
+    const r = ranchData.find(x => x.id === id);
+    if (!r) return;
+
+    // Sembunyikan Main, Tampilkan Detail
+    document.getElementById('view-main').classList.add('hidden');
+    document.getElementById('view-detail').classList.remove('hidden');
+
+    // Isi Header Detail
+    document.getElementById('dt-icon').innerText = r.icon;
+    document.getElementById('dt-name').innerText = r.name;
+    document.getElementById('dt-sub').innerText = r.sub;
+    document.getElementById('dt-count').innerText = r.count;
+
+    // Loop & Isi Demografi
+    document.getElementById('dt-demografi').innerHTML = r.demografi.map(d => 
+        `<div class="data-row"><span>${d.label}</span> <b>${d.qty} ekor</b></div>`
+    ).join('') || '<div style="font-size:0.75rem; color:#888;">Belum ada data</div>';
+
+    // Loop & Isi Costs
+    document.getElementById('dt-costs').innerHTML = r.costs.map(c => 
+        `<div class="data-row"><span>${c.label}</span> <b class="val-cost">- Rp ${fmt(c.val)}</b></div>`
+    ).join('') || '<div style="font-size:0.75rem; color:#888;">Belum ada pengeluaran</div>';
+
+    // Loop & Isi Produksi Unit Utuh
+    document.getElementById('dt-prod-whole').innerHTML = r.prodWhole.map(p => `
+        <div class="data-row" style="align-items: flex-start;">
+            <div>
+                <div>${p.label}</div>
+                <div style="font-size:0.65rem; color:var(--muted);">Nilai: Rp ${fmt(p.val)}</div>
+            </div>
+            <b class="val-income">${p.qty} ekor</b>
+        </div>
+    `).join('') || '<div style="font-size:0.75rem; color:#888;">Belum ada penjualan utuh</div>';
+
+    // Loop & Isi Produksi Harian
+    document.getElementById('dt-prod-daily').innerHTML = r.prodDaily.map(p => `
+        <div class="data-row" style="align-items: flex-start;">
+            <div>
+                <div>${p.label}</div>
+                <div style="font-size:0.65rem; color:var(--muted);">Nilai: Rp ${fmt(p.val)}</div>
+            </div>
+            <b class="val-income">${p.qty} ${p.unit}</b>
+        </div>
+    `).join('') || '<div style="font-size:0.75rem; color:#888;">Belum ada produksi harian</div>';
+}
+
+// 4. FUNGSI KEMBALI KE MAIN VIEW
+function closeDetail() {
+    document.getElementById('view-detail').classList.add('hidden');
+    document.getElementById('view-main').classList.remove('hidden');
+    
+    // Render ulang Main View agar jika ada data baru, totalnya ter-update
+    renderMain(); 
+}
+
+// Jalankan render pertama kali saat aplikasi dibuka
+renderMain();
+</script>
+</body>
+</html>
